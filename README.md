@@ -4,11 +4,17 @@
 # Project 4a
 
 ## Name
-
+Benjamin Wintersteen
 ## Class year
-
+2027
 ## Extension(s) - Describe your extension(s) here
+Not extensions but here are the the descriptions and aspects of my code complete functionalities:
+My add document and clear document work. My build corpus is not updating the corpus. This means all the other functionalities are based off the text from the test.jsonl file
 
+Here is my implementation of token_counts on test.jsonl:
+![Alt text](image.png)
+Here is the start of my implementation of document table on the first doc in test.jsonl
+![Alt text](image-1.png)
 ## Resources - Who or what did you use to finish this project deliverable?
 
 -----------------------------------------------------------------------------------------------------------------------------------------------

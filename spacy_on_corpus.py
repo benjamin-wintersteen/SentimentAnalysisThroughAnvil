@@ -296,7 +296,8 @@ class corpus(dict):
         :type tags_to_exclude: list[str]
         """
         # COPY FROM PROJECT 3c
-        self.plot_counts(self.get_token_counts(tags_to_exclude=tags_to_exclude, top_k = top_k), 'token_frequencies.png')
+        token_counts = self.get_token_counts()
+        self.plot_counts( token_counts, 'token_frequencies.png')
 
     def plot_entity_frequencies(self, tags_to_exclude=['QUANTITY'], top_k=25):
         """Makes a bar chart for the top k most frequent entities in the corpus.
@@ -531,6 +532,7 @@ class corpus(dict):
                 # if there are keys 'id' and 'fullText' in 'js'
                 if 'id' in js.keys() and 'fullText' in js.keys():
                     my_corpus.add_document(js['id'], cls.nlp(''.join(js["fullText"])), metadata = js)
+                    print(cls.nlp(''.join(js["fullText"])))
         return my_corpus
 
     @classmethod   
