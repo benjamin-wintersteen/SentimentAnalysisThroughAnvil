@@ -330,7 +330,7 @@ class corpus(dict):
         # COPY FROM PROJECT 3c
         self.plot_counts(self.get_metadata_counts(key, top_k = top_k), str(key) + '_frequencies.png')
  
-    def plot_word_cloud(self, name, counts):
+    def plot_word_cloud(self, counts, file_name):
         """Plots a word cloud.
 
         :param counts: a list of item, count tuples
@@ -344,6 +344,7 @@ class corpus(dict):
         cloud = px.imshow(wc)
         cloud.update_xaxes(showticklabels=False)
         cloud.update_yaxes(showticklabels=False)
+        cloud.savefig(self.name + '_' + file_name)
         return cloud
 
     def plot_token_cloud(self, tags_to_exclude=['PUNCT', 'SPACE']):
