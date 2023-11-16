@@ -12,6 +12,8 @@ import wordcloud
 import json 
 # import re
 import re
+#import pyate
+import pyate
 
 
 class counter(dict):
@@ -82,7 +84,7 @@ class counter(dict):
 
 class corpus(dict):
     nlp = spacy.load('en_core_web_md')          
-                         
+    nlp.add_pipe('combo_basic')
     def __init__(self, name=''):
         """Creates or extends a corpus.
 
@@ -484,7 +486,25 @@ class corpus(dict):
 
 
         return text
+    def get_keyphrase_counts(self, top_k = -1):
+        """Builds a keyphrase frequency table.
 
+        :param tags_to_exclude: (Coarse-grained) part of speech tags to exclude from the results
+        :type tags_to_exclude: list[string]
+        :param top_k: how many to keep
+        :type top_k: int
+        :returns: a list of pairs (item, frequency)
+        :rtype: list
+        """
+        # Make an empty list of tokens (1 line)
+        keyphrases = []
+        # For each doc in the corpus, add its tokens to the list of tokens (2 lines)
+        for doc in self.get_documents():
+            keyphrases.extend(list(doc._.combo_basic.keys()))
+        # Count the tokens using a counter object; return a list of pairs (item, frequency) (1 line)
+        return counter(keyphrases, top_k = top_k).get_counts()
+        # HINT: use the counter class
+        
     @classmethod
     def load_textfile(cls, file_name, my_corpus=None):
         """Loads a textfile into a corpus.
@@ -532,7 +552,6 @@ class corpus(dict):
                 # if there are keys 'id' and 'fullText' in 'js'
                 if 'id' in js.keys() and 'fullText' in js.keys():
                     my_corpus.add_document(js['id'], cls.nlp(''.join(js["fullText"])), metadata = js)
-                    print(cls.nlp(''.join(js["fullText"])))
         return my_corpus
 
     @classmethod   
