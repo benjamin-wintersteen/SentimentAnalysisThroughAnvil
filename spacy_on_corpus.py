@@ -87,6 +87,8 @@ class counter(dict):
 class corpus(dict):
     nlp = spacy.load('en_core_web_md')          
     nlp.add_pipe('combo_basic')
+    classifier = pipeline('sentiment-analysis')
+
     def __init__(self, name=''):
         """Creates or extends a corpus.
 
@@ -151,7 +153,16 @@ class corpus(dict):
         """
         # COPY FROM PROJECT 3c
         return self[id]['metadata'] if id in self and 'metadata' in self[id] else None # replace None
-                         
+    
+    def get_sentiments(self):
+        """Gets the metadata for each document from the corpus.
+
+        :returns: a list of metadata dictionaries
+        :rtype: list[dict]
+        """
+        # COPY FROM PROJECT 3c
+        return [item['sentiment-analysis'] for item in self.values()] # replace None
+              
     def add_document(self, id, doc, metadata={}):
         """Adds a document to the corpus.
 
@@ -163,9 +174,9 @@ class corpus(dict):
         :type metadata: dict
         """
         # COPY FROM PROJECT 3c
-        classifier = pipeline('sentiment-analysis')
+        
         #add_pipeline = classifier(str(doc)) # , 'sentiment-analysis': add_pipeline
-        self[id] = {'doc': self.nlp(doc), 'metadata': metadata, 'sentiment-analysis': classifier(str(doc))[0]}
+        self[id] = {'doc': self.nlp(doc), 'metadata': metadata, 'sentiment-analysis': corpus.classifier(str(doc))[0]}
         
         
     def get_token_counts(self, tags_to_exclude = ['PUNCT', 'SPACE'], top_k=-1):
@@ -237,8 +248,7 @@ class corpus(dict):
         # Make an empty list of chunks (1 line)
         sentiments = []
         # For each doc in the corpus, add its chunks to the list of chunks (2 lines)
-        for id in self:
-            sentiments.extend(id['sentiment-analysis']['label'])
+        sentiments.extend([sentiment['label'] for sentiment in self.get_sentiments()])
         # Count the chunks using a counter object; return a list of pairs (item, frequency) (1 line)
         return counter(sentiments, top_k = top_k).get_counts()
         # HINT: use the counter class
