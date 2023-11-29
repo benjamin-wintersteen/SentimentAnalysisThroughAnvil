@@ -321,6 +321,7 @@ class corpus(dict):
         text += f"Neutral Docuements: %i\n" % sum([x[1] for x in sentiment_counts if x[0] == "NEUTRAL"])
         text += f"Negative Docuements: %i\n" % sum([x[1] for x in sentiment_counts if x[0] == "NEGATIVE"])
         return text
+    
     def get_basic_statistics(self):
         """Prints summary statistics for the corpus.
         
