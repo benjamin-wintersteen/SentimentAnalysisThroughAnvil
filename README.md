@@ -50,11 +50,12 @@ Possible extensions (from least points to most points):
 
 ## Project Rubric
 
-- [] File spacy_on_corpus.py is complete and is commented. (7 points)
-- [] Notebook is code-complete. (7 points)
-- [] All requested screenshots are provided in notebook. (7 points)
-- [] Student made meaningful commit messages. (2 points)
-- [] Readme has student's name, class year and resources student used. (2 points)
-- [] Extension (1-2 points for a start; 3-4 points for a complete extension; 5 points for a surprising and creative extension)
+- [3] Notebook is code-complete and outputs are correct for the three listed functionalities. (4 points)
+- [4] File spacy_on_corpus.py is complete, runs and is commented for the three listed functionalities. (4  points)
+- [1] Student made meaningful commit messages (1 pt)
+- [1] Readme has student's name, class year and resources student used. (1 pt)
+
 
 ### Comments from grader
+
+* Only have 2 functionalities shown in the Readme + screenshots in the repo
