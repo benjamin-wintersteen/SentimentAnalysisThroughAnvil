@@ -16,6 +16,9 @@ import re
 import pyate
 #import transformers
 from transformers import pipeline
+#import sentence transformers
+from sentence_transformers import SentenceTransformer
+
 
 
 class counter(dict):
@@ -88,6 +91,9 @@ class corpus(dict):
     nlp = spacy.load('en_core_web_md')          
     nlp.add_pipe('combo_basic')
     classifier = pipeline('sentiment-analysis')
+    summarizer = pipeline('summarization')
+    # Pre-calculate embeddings; consider any embedding model 
+    embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 
     def __init__(self, name=''):
         """Creates or extends a corpus.
@@ -176,7 +182,7 @@ class corpus(dict):
         # COPY FROM PROJECT 3c
         
         #add_pipeline = classifier(str(doc)) # , 'sentiment-analysis': add_pipeline
-        self[id] = {'doc': self.nlp(doc), 'metadata': metadata, 'sentiment-analysis': corpus.classifier(str(doc))[0]}
+        self[id] = {'doc': self.nlp(doc), 'metadata': metadata, 'sentiment-analysis': corpus.classifier(str(doc))[0], 'summarization': corpus.summarizer(str(doc), min_length = 5, max_length = 20)[0]}
         
         
     def get_token_counts(self, tags_to_exclude = ['PUNCT', 'SPACE'], top_k=-1):
@@ -438,6 +444,15 @@ class corpus(dict):
         """
         # COPY FROM PROJECT 3c, then add return value
         return self.plot_word_cloud(self.get_noun_chunk_counts(), 'chunk_cloud.png')
+    
+    def plot_sentiment_cloud(self):
+        """Makes a word cloud for the frequencies of noun chunks in a corpus.
+
+        :returns: the word cloud
+        :rtype: wordcloud
+        """
+        # COPY FROM PROJECT 3c, then add return value
+        return self.plot_word_cloud(self.get_sentiment_counts(), 'sentiment_cloud.png')
         
     def update_document_metadata(self, id, value_key_pair):
         """Makes a word cloud for the frequencies of noun chunks in a corpus.
@@ -556,6 +571,9 @@ class corpus(dict):
 
 
         return text
+    def render_doc_summary(self, doc_id):
+        return self[doc_id]['summarization']['summary_text']
+    
     def get_keyphrase_counts(self, top_k = -1):
         """Builds a keyphrase frequency table.
 
@@ -585,7 +603,61 @@ class corpus(dict):
         text = f'Keyphrases: %i\n' % sum([x[1] for x in keyphrase_counts])
         text += f"Unique Keyphrases: %i\n" % len(keyphrase_counts)
         return text
-        
+    def build_topic_model(self):
+        full_texts = [self[x]['doc'].text for x in self]*50
+        embeddings = corpus.embedding_model.encode(full_texts, show_progress_bar=True)
+
+        # Prevent stochastic behavior
+        from umap import UMAP
+
+        # choose a number of neighbors that's reasonable for your data set
+        umap_model = UMAP(n_neighbors=5, n_components=5, min_dist=0.0, metric='cosine', random_state=42)
+
+        # Set minimum cluster size
+        from hdbscan import HDBSCAN
+
+        # choose a minimum cluster size that's reasonable for your data set
+        hdbscan_model = HDBSCAN(min_cluster_size=5, metric='euclidean', cluster_selection_method='eom', prediction_data=True)
+
+        # I find this dubious but okay; "Improve" default representation
+        from sklearn.feature_extraction.text import CountVectorizer
+
+        vectorizer_model = CountVectorizer(stop_words="english", min_df=2, ngram_range=(1, 2))
+        # Use multiple representations
+        from bertopic.representation import KeyBERTInspired, MaximalMarginalRelevance, PartOfSpeech
+
+        # KeyBERT
+        keybert_model = KeyBERTInspired()
+
+        # Part-of-Speech
+        pos_model = PartOfSpeech("en_core_web_md")
+
+        # MMR
+        mmr_model = MaximalMarginalRelevance(diversity=0.3)
+
+        # All representation models
+        representation_model = {
+            "KeyBERT": keybert_model,
+            "MMR": mmr_model,
+            "POS": pos_model
+        }
+        # Make topic model using all of this setup
+        from bertopic import BERTopic
+
+        topic_model = BERTopic(
+
+        # Pipeline models
+        embedding_model=corpus.embedding_model,
+        umap_model=umap_model,
+        hdbscan_model=hdbscan_model,
+        vectorizer_model=vectorizer_model,
+        representation_model=representation_model,
+
+        # Hyperparameters
+        top_n_words=10,
+        verbose=True,
+        nr_topics="auto"
+        )
     @classmethod
     def load_textfile(cls, file_name, my_corpus=None):
         """Loads a textfile into a corpus.
