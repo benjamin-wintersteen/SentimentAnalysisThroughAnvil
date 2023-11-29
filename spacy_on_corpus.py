@@ -14,6 +14,8 @@ import json
 import re
 #import pyate
 import pyate
+#import transformers
+from transformers import pipeline
 
 
 class counter(dict):
@@ -116,6 +118,19 @@ class corpus(dict):
         """
         # COPY FROM PROJECT 3c
         return self[id]['doc'] if id in self and 'doc' in self[id] else None
+    
+    def get_document_texts(self):
+        """Gets the document texts from the corpus.
+
+        :returns: a spaCy document
+        :rtype: (spaCy) doc
+        """
+        keys = list(self.keys())
+        # get the text from each entry in the corpus
+        text = {}
+        for key in keys:
+            text[key] = self.get_document(key)
+        return list(text.items())
                          
     def get_metadatas(self):
         """Gets the metadata for each document from the corpus.
@@ -148,7 +163,10 @@ class corpus(dict):
         :type metadata: dict
         """
         # COPY FROM PROJECT 3c
-        self[id] = {'doc': self.nlp(doc), 'metadata': metadata}
+        classifier = pipeline('sentiment-analysis')
+        #add_pipeline = classifier(str(doc)) # , 'sentiment-analysis': add_pipeline
+        self[id] = {'doc': self.nlp(doc), 'metadata': metadata, 'sentiment-analysis': classifier(str(doc))[0]}
+        
         
     def get_token_counts(self, tags_to_exclude = ['PUNCT', 'SPACE'], top_k=-1):
         """Builds a token frequency table.
@@ -207,6 +225,23 @@ class corpus(dict):
         # Count the chunks using a counter object; return a list of pairs (item, frequency) (1 line)
         return counter(chunks, top_k = top_k).get_counts()
         # HINT: use the counter class
+    def get_sentiment_counts(self, top_k=-1):
+        """Builds a sentiment frequency table.
+
+        :param top_k: how many to keep
+        :type top_k: int
+        :returns: a list of pairs (item, frequency)
+        :rtype: list
+        """
+        # COPY FROM PROJECT 3c
+        # Make an empty list of chunks (1 line)
+        sentiments = []
+        # For each doc in the corpus, add its chunks to the list of chunks (2 lines)
+        for id in self:
+            sentiments.extend(id['sentiment-analysis']['label'])
+        # Count the chunks using a counter object; return a list of pairs (item, frequency) (1 line)
+        return counter(sentiments, top_k = top_k).get_counts()
+        # HINT: use the counter class
 
     def get_metadata_counts(self, key, top_k=-1):
         """Gets frequency data for the values of a particular metadata key.
@@ -249,7 +284,7 @@ class corpus(dict):
         """
         # NEW FOR PROJECT 4a
         entity_counts = self.get_entity_counts()
-        text += f'Entities: %i\n' % sum([x[1] for x in entity_counts])
+        text = f'Entities: %i\n' % sum([x[1] for x in entity_counts])
         text += f"Unique Entities: %i\n" % len(entity_counts)
         return text
         
@@ -261,10 +296,21 @@ class corpus(dict):
         """
         # NEW FOR PROJECT 4a
         noun_chunk_counts = self.get_noun_chunk_counts()
-        text += f'Noun chunks: %i\n' % sum([x[1] for x in noun_chunk_counts])
+        text = f'Noun chunks: %i\n' % sum([x[1] for x in noun_chunk_counts])
         text += f"Unique Noun chunks: %i\n" % len(noun_chunk_counts)
         return text
-    
+    def get_sentiment_statistics(self):
+        """Prints summary statistics for noun chunks in the corpus. Model on get_token_statistics.
+        
+        :returns: the statistics report
+        :rtype: str
+        """
+        # NEW FOR PROJECT 4a
+        sentiment_counts = self.get_sentiment_counts()
+        text = f'Positive Documents: %i\n' % sum([x[1] for x in sentiment_counts if x[0] == "POSITIVE"])
+        text += f"Neutral Docuements: %i\n" % sum([x[1] for x in sentiment_counts if x[0] == "NEUTRAL"])
+        text += f"Negative Docuements: %i\n" % sum([x[1] for x in sentiment_counts if x[0] == "NEGATIVE"])
+        return text
     def get_basic_statistics(self):
         """Prints summary statistics for the corpus.
         
@@ -276,6 +322,7 @@ class corpus(dict):
         text += self.get_token_statistics()
         text += self.get_entity_statistics()
         text += self.get_noun_chunk_statistics()
+        text += self.get_sentiment_statistics()
         return text
 
     def plot_counts(self, counts, file_name):
@@ -347,8 +394,8 @@ class corpus(dict):
         cloud = px.imshow(wc)
         cloud.update_xaxes(showticklabels=False)
         cloud.update_yaxes(showticklabels=False)
-        cloud.savefig(self.name + '_' + file_name)
         return cloud
+        
 
     def plot_token_cloud(self, tags_to_exclude=['PUNCT', 'SPACE']):
         """Makes a word cloud for the frequencies of tokens in a corpus.
@@ -381,6 +428,18 @@ class corpus(dict):
         # COPY FROM PROJECT 3c, then add return value
         return self.plot_word_cloud(self.get_noun_chunk_counts(), 'chunk_cloud.png')
         
+    def update_document_metadata(self, id, value_key_pair):
+        """Makes a word cloud for the frequencies of noun chunks in a corpus.
+
+        :returns: the word cloud
+        :rtype: wordcloud
+        """
+        #try:
+        for i in value_key_pair.keys():
+            self[id]['metadata'][i] = value_key_pair[i]
+        #except: 
+        #    print('id not in dictionary')
+
     def render_doc_markdown(self, doc_id):
         """Render a document as markdown. From project 2a. 
 
@@ -504,6 +563,17 @@ class corpus(dict):
         # Count the tokens using a counter object; return a list of pairs (item, frequency) (1 line)
         return counter(keyphrases, top_k = top_k).get_counts()
         # HINT: use the counter class
+    def get_keyphrase_statistics(self):
+        """Prints summary statistics for noun chunks in the corpus. Model on get_token_statistics.
+        
+        :returns: the statistics report
+        :rtype: str
+        """
+        # NEW FOR PROJECT 4a
+        keyphrase_counts = self.get_keyphrase_counts()
+        text = f'Keyphrases: %i\n' % sum([x[1] for x in keyphrase_counts])
+        text += f"Unique Keyphrases: %i\n" % len(keyphrase_counts)
+        return text
         
     @classmethod
     def load_textfile(cls, file_name, my_corpus=None):
