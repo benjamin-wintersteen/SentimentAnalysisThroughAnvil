@@ -18,7 +18,16 @@ import pyate
 from transformers import pipeline
 #import sentence transformers
 from sentence_transformers import SentenceTransformer
-
+# Prevent stochastic behavior
+from umap import UMAP
+# Set minimum cluster size
+from hdbscan import HDBSCAN
+# I find this dubious but okay; "Improve" default representation
+from sklearn.feature_extraction.text import CountVectorizer
+# Use multiple representations
+from bertopic.representation import KeyBERTInspired, MaximalMarginalRelevance, PartOfSpeech
+# Make topic model using all of this setup
+from bertopic import BERTopic
 
 
 class counter(dict):
@@ -94,6 +103,7 @@ class corpus(dict):
     summarizer = pipeline('summarization')
     # Pre-calculate embeddings; consider any embedding model 
     embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+    topic_model = load_topic_model()
 
     def __init__(self, name=''):
         """Creates or extends a corpus.
@@ -606,26 +616,35 @@ class corpus(dict):
     def build_topic_model(self, model_type, nr_topics = -1, merge = []):
         full_texts = [self[x]['doc'].text for x in self]*50
         embeddings = corpus.embedding_model.encode(full_texts, show_progress_bar=True)
-
-        # Prevent stochastic behavior
-        from umap import UMAP
-
+        
+        topics, probabilities = topic_model.fit_transform(full_texts, embeddings)
+        
+        if nr_topics >= 0:
+            corpus.topic_model.reduce_topics(full_texts, nr_topics=nr_topics)
+        if merge != []:
+            try:
+                topics_to_merge = [merge]
+                topic_model.merge_topics(full_texts, topics_to_merge)
+            except:
+                print("merge didn't work")
+        if model_type == 'topics':
+            return topic_model.visualize_topics()
+        elif model_type == 'documents':
+            reduced_embeddings = UMAP(n_neighbors=10, n_components=2, min_dist=0.0, metric='cosine').fit_transform(embeddings)
+            return topic_model.visualize_documents(full_texts, reduced_embeddings=reduced_embeddings)
+        else:
+            return None
+    
+    @classmethod
+    def load_topic_model():
         # choose a number of neighbors that's reasonable for your data set
         umap_model = UMAP(n_neighbors=5, n_components=5, min_dist=0.0, metric='cosine', random_state=42)
-
-        # Set minimum cluster size
-        from hdbscan import HDBSCAN
 
         # choose a minimum cluster size that's reasonable for your data set
         hdbscan_model = HDBSCAN(min_cluster_size=5, metric='euclidean', cluster_selection_method='eom', prediction_data=True)
 
-        # I find this dubious but okay; "Improve" default representation
-        from sklearn.feature_extraction.text import CountVectorizer
-
         vectorizer_model = CountVectorizer(stop_words="english", min_df=2, ngram_range=(1, 2))
-        # Use multiple representations
-        from bertopic.representation import KeyBERTInspired, MaximalMarginalRelevance, PartOfSpeech
-
+        
         # KeyBERT
         keybert_model = KeyBERTInspired()
 
@@ -641,8 +660,6 @@ class corpus(dict):
             "MMR": mmr_model,
             "POS": pos_model
         }
-        # Make topic model using all of this setup
-        from bertopic import BERTopic
 
         topic_model = BERTopic(
 
@@ -658,24 +675,7 @@ class corpus(dict):
         verbose=True,
         nr_topics="auto"
         )
-        topics, probabilities = topic_model.fit_transform(full_texts, embeddings)
-        
-        if nr_topics >= 0:
-            topic_model.reduce_topics(full_texts, nr_topics=nr_topics)
-        if merge != []:
-            try:
-                topics_to_merge = [merge]
-                topic_model.merge_topics(full_texts, topics_to_merge)
-            except:
-                print("merge didn't work")
-        if model_type == 'topics':
-            return topic_model.visualize_topics()
-        elif model_type == 'documents':
-            reduced_embeddings = UMAP(n_neighbors=10, n_components=2, min_dist=0.0, metric='cosine').fit_transform(embeddings)
-            return topic_model.visualize_documents(full_texts, reduced_embeddings=reduced_embeddings)
-        else:
-            return None
-    
+        return topic_model
     @classmethod
     def load_textfile(cls, file_name, my_corpus=None):
         """Loads a textfile into a corpus.
