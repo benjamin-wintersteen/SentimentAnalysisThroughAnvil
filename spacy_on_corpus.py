@@ -603,7 +603,7 @@ class corpus(dict):
         text = f'Keyphrases: %i\n' % sum([x[1] for x in keyphrase_counts])
         text += f"Unique Keyphrases: %i\n" % len(keyphrase_counts)
         return text
-    def build_topic_model(self):
+    def build_topic_model(self, model_type, nr_topics = -1, merge = []):
         full_texts = [self[x]['doc'].text for x in self]*50
         embeddings = corpus.embedding_model.encode(full_texts, show_progress_bar=True)
 
@@ -658,6 +658,24 @@ class corpus(dict):
         verbose=True,
         nr_topics="auto"
         )
+        topics, probabilities = topic_model.fit_transform(full_texts, embeddings)
+        
+        if nr_topics >= 0:
+            topic_model.reduce_topics(full_texts, nr_topics=nr_topics)
+        if merge != []:
+            try:
+                topics_to_merge = [merge]
+                topic_model.merge_topics(full_texts, topics_to_merge)
+            except:
+                print("merge didn't work")
+        if model_type == 'topics':
+            return topic_model.visualize_topics()
+        elif model_type == 'documents':
+            reduced_embeddings = UMAP(n_neighbors=10, n_components=2, min_dist=0.0, metric='cosine').fit_transform(embeddings)
+            return topic_model.visualize_documents(full_texts, reduced_embeddings=reduced_embeddings)
+        else:
+            return None
+    
     @classmethod
     def load_textfile(cls, file_name, my_corpus=None):
         """Loads a textfile into a corpus.
