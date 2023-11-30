@@ -3,13 +3,13 @@
 # Project 3c
 
 ## Name
-
+benjamin Wintersteen
 ## Class year
-
+2027
 ## Extension(s) - Describe your extension(s) here
 
 ## Resources - Who or what did you use to finish this project deliverable?
-
+I worked with Vishnu and Ben K-B. I did a touch of debugging with ChatGPT and also used huggingface api. 
 
 https://anvil.works/docs/client/components/plots
 https://anvil.works/docs/client/components/plots
