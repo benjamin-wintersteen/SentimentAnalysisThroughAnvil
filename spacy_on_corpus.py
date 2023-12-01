@@ -103,7 +103,6 @@ class corpus(dict):
     summarizer = pipeline('summarization')
     # Pre-calculate embeddings; consider any embedding model 
     embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-    topic_model = load_topic_model()
 
     def __init__(self, name=''):
         """Creates or extends a corpus.
@@ -116,7 +115,8 @@ class corpus(dict):
         super().__init__()
         # COPY FROM PROJECT 3c
         self.name = name
-       
+        self.topic_model = self.load_topic_model()
+        
     def get_documents(self):
         """Gets the documents from the corpus.
 
@@ -287,7 +287,27 @@ class corpus(dict):
 
         # return the metadata counts as a list of pairs
         return counter(metadatas, top_k = top_k).get_counts()
+    def get_paragraph_counts(self, top_k=-1):
+        """Builds a paragraph frequency table.
+        Uses Span class to do so
 
+        :returns: a list of pairs (item, frequency)
+        :rtype: list
+        """
+
+        paragraphs = []
+        start = 0
+        
+        for doc in self.get_documents():
+            doc_paragraphs = []
+            for token in doc:
+                if token.is_space and token.text.count("\n") > 1:
+                    doc_paragraphs.append(span(doc, start, token.i))
+                    start = token.i + 1
+            paragraphs.extend(doc_paragraphs)
+        
+        return counter(paragraphs, top_k = top_k).get_counts()
+    
     def get_token_statistics(self):
         """Prints summary statistics for tokens in the corpus, including: number of documents; number of sentences; number of tokens; number of unique tokens.
         
@@ -337,6 +357,33 @@ class corpus(dict):
         text += f"Neutral Docuements: %i\n" % sum([x[1] for x in sentiment_counts if x[0] == "NEUTRAL"])
         text += f"Negative Docuements: %i\n" % sum([x[1] for x in sentiment_counts if x[0] == "NEGATIVE"])
         return text
+    def get_paragraph_statistics(self):
+        """Prints summary statistics for noun chunks in the corpus. Model on get_token_statistics.
+        
+        :returns: the statistics report
+        :rtype: str
+        """
+        # NEW FOR PROJECT 4a
+        paragraph_counts = self.get_paragraph_counts()
+        text = f'Paragraphs: %i\n' % sum([x[1] for x in paragraph_counts])
+        return text
+    def get_metadata_statistics(self):
+        metadata_keys = self.get_metadatas()[0].keys()
+        if 'publicationYear' in metadata_keys:
+            publication_counts = self.get_metadata_counts('publicationYear')
+            text = 'The publication year range is ' + str(sorted(publication_counts)[0][0]) + ' - ' + str(sorted(publication_counts)[-1][0]) + '\n'
+        elif 'pageCount' in metadata_keys:
+            # get the page count table
+            page_counts = self.get_metadata_counts('pageCount')
+            # print the page count range of the corpus
+            text += 'The pageCount range is ' + sorted(page_counts)[0][0] + ' - ' + sorted(page_counts)[-1][0] + '\n'
+        elif 'id' in metadata_keys:
+            publication_counts = self.get_metadata_counts('id')
+            text = 'The id range is ' + str(sorted(id_counts)[0][0]) + ' - ' + str(sorted(id_counts)[-1][0]) + '\n'
+        elif 'author' in metadata_keys:
+            author_counts = self.get_metadata_counts('author')
+            text = 'The number of authors are' + sum([x[1] for x in author_counts])
+        return text
     
     def get_basic_statistics(self):
         """Prints summary statistics for the corpus.
@@ -350,6 +397,8 @@ class corpus(dict):
         text += self.get_entity_statistics()
         text += self.get_noun_chunk_statistics()
         text += self.get_sentiment_statistics()
+       # text += self.get_metadata_statistics()
+        text += self.get_paragraph_statistics()
         return text
 
     def plot_counts(self, counts, file_name):
@@ -463,12 +512,18 @@ class corpus(dict):
         """
         # COPY FROM PROJECT 3c, then add return value
         return self.plot_word_cloud(self.get_sentiment_counts(), 'sentiment_cloud.png')
-        
-    def update_document_metadata(self, id, value_key_pair):
+    def plot_metadata_cloud(self, key):
         """Makes a word cloud for the frequencies of noun chunks in a corpus.
 
         :returns: the word cloud
         :rtype: wordcloud
+        """
+        # COPY FROM PROJECT 3c, then add return value
+        return self.plot_word_cloud(self.get_metadata_counts(key), 'metadata_cloud.png')
+        
+    def update_document_metadata(self, id, value_key_pair):
+        """updates the document metadata
+
         """
         #try:
         for i in value_key_pair.keys():
@@ -582,7 +637,7 @@ class corpus(dict):
 
         return text
     def render_doc_summary(self, doc_id):
-        return self[doc_id]['summarization']['summary_text']
+        return str(self[doc_id]['summarization']['summary_text'])
     
     def get_keyphrase_counts(self, top_k = -1):
         """Builds a keyphrase frequency table.
@@ -617,26 +672,26 @@ class corpus(dict):
         full_texts = [self[x]['doc'].text for x in self]*50
         embeddings = corpus.embedding_model.encode(full_texts, show_progress_bar=True)
         
-        topics, probabilities = topic_model.fit_transform(full_texts, embeddings)
+        topics, probabilities = self.topic_model.fit_transform(full_texts, embeddings)
         
         if nr_topics >= 0:
             corpus.topic_model.reduce_topics(full_texts, nr_topics=nr_topics)
         if merge != []:
             try:
                 topics_to_merge = [merge]
-                topic_model.merge_topics(full_texts, topics_to_merge)
+                self.topic_model.merge_topics(full_texts, topics_to_merge)
             except:
                 print("merge didn't work")
         if model_type == 'topics':
-            return topic_model.visualize_topics()
+            return self.topic_model.visualize_topics()
         elif model_type == 'documents':
             reduced_embeddings = UMAP(n_neighbors=10, n_components=2, min_dist=0.0, metric='cosine').fit_transform(embeddings)
-            return topic_model.visualize_documents(full_texts, reduced_embeddings=reduced_embeddings)
+            return self.topic_model.visualize_documents(full_texts, reduced_embeddings=reduced_embeddings)
         else:
             return None
     #hello
     @classmethod
-    def load_topic_model():
+    def load_topic_model(cls):
         # choose a number of neighbors that's reasonable for your data set
         umap_model = UMAP(n_neighbors=5, n_components=5, min_dist=0.0, metric='cosine', random_state=42)
 
@@ -790,3 +845,58 @@ class corpus(dict):
             print(f"Couldn't load % s due to error %s" % (pattern, str(e)))
             # return the corpus
         return my_corpus
+    # Create a class named 'span' for paragraph counts
+class span:
+    """A simple class that models a text span."""
+    
+    # This is the class constructor
+    # self is always the object
+    def __init__(self, document, start, end): 
+        """
+        Initialize any new instances of class span with the following attributes
+        
+        :param document: the text the span is part of
+        :type document: str
+        :param start: the start character of the span in the text
+        :type start: int
+        :param end: the end character of the span in the text
+        :type end: int
+        """
+        self.document = document
+        # now you! create an instance attribute for argument start
+        self.start = start
+        # now you! create an instance attribute for argument end
+        self.end = end
+
+    # This is a class method, so it has to take self as a parameter. We call it using the dot notation.
+    def length(self): 
+        """
+        Calculates the length of the span
+        
+        :returns: the length of the span
+        :rtype: int
+        """
+        # define length!
+        return len(self.document)
+    
+    # This is another class method.
+    def text(self):
+        """
+        Returns the text of the span
+        
+        :returns: the text of the span
+        :rtype: str
+        """
+        return self.document[self.start:self.end + 1]
+    def get_document():
+        return self.document
+    def get_start():
+        return self.start
+    def get_end():
+        return self.end
+    def set_document(document):
+        self.document = document
+    def set_start(start):
+        self.start = start
+    def set_end(end):
+        self.end = end
