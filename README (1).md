@@ -7,7 +7,7 @@ benjamin Wintersteen
 ## Class year
 2027
 ## Extension(s) - Describe your extension(s) here
-
+I am using my freebee for extensions this week. 
 ## Resources - Who or what did you use to finish this project deliverable?
 I worked with Vishnu and Ben K-B. I did a touch of debugging with ChatGPT and also used huggingface api. 
 

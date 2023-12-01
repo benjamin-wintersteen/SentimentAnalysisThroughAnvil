@@ -369,20 +369,14 @@ class corpus(dict):
         return text
     def get_metadata_statistics(self):
         metadata_keys = self.get_metadatas()[0].keys()
-        if 'publicationYear' in metadata_keys:
-            publication_counts = self.get_metadata_counts('publicationYear')
-            text = 'The publication year range is ' + str(sorted(publication_counts)[0][0]) + ' - ' + str(sorted(publication_counts)[-1][0]) + '\n'
-        elif 'pageCount' in metadata_keys:
-            # get the page count table
-            page_counts = self.get_metadata_counts('pageCount')
-            # print the page count range of the corpus
-            text += 'The pageCount range is ' + sorted(page_counts)[0][0] + ' - ' + sorted(page_counts)[-1][0] + '\n'
-        elif 'id' in metadata_keys:
-            publication_counts = self.get_metadata_counts('id')
-            text = 'The id range is ' + str(sorted(id_counts)[0][0]) + ' - ' + str(sorted(id_counts)[-1][0]) + '\n'
-        elif 'author' in metadata_keys:
-            author_counts = self.get_metadata_counts('author')
-            text = 'The number of authors are' + sum([x[1] for x in author_counts])
+        text = ''
+        for key in metadata_keys:
+            counts = self.get_metadata_counts(key)
+            if isinstance(self.get_metadatas()[0][key], int): # 0 could be replaced wih something else if data is not consistent
+                text += 'The ' + str(key) +' range is ' + str(sorted(counts)[0][0]) + ' - ' + str(sorted(counts)[-1][0]) + '\n'
+            else:
+                text += 'The number of ' + str(key) + ' are ' + sum([x[1] for x in counts])
+
         return text
     
     def get_basic_statistics(self):
