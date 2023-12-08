@@ -7,7 +7,11 @@ benjamin Wintersteen
 ## Class year
 2027
 ## Extension(s) - Describe your extension(s) here
-I am using my freebee for extensions this week. 
+My first extension was to implement paragraph statistics in this project. This wasn't too hard, much of the paragraph counts code from 3c transferred over. I also created a paragraph statistics method that returns the number of paragraphs for the corpus. this wasn't super informative for this corpus because each document had a length of 1 paragraph so the total was 10
+
+My second extension was the most difficult in 4b for this week and took many iterations and plans to figure out. I created a extra metadata's page on anvil and had it plot statistics, counts, and plots for each metadata. This required a re-writing of metadata statistics in an iterative way that allows for documents to have ambiguous metadata but still being able to access that metadatas statistics and counts. Here are some screenshots of those counts. 
+![Alt text](image-2.png)
+![Alt text](image-3.png)
 ## Resources - Who or what did you use to finish this project deliverable?
 I worked with Vishnu and Ben K-B. I did a touch of debugging with ChatGPT and also used huggingface api. 
 
@@ -22,6 +26,8 @@ color etc
 top_k and tags to exclude x 2
 plot more than one at a time (https://anvil.works/docs/client/components/plots)
 add jsonl via input text area
+If you added paragraphs to project 3c, port that over to project 4a.
+Add some metadata analysis and visualization on a fourth screen.
 
 1) move plot functions to anvil client side
 2) client side should allow user to type text or upload a file, then to choose any of the things main permits - and render them

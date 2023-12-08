@@ -365,18 +365,21 @@ class corpus(dict):
         """
         # NEW FOR PROJECT 4a
         paragraph_counts = self.get_paragraph_counts()
-        text = f'Paragraphs: %i\n' % sum([x[1] for x in paragraph_counts])
+        if sum([x[1] for x in paragraph_counts]) != 0:
+            text = f'Paragraphs: %i\n' % sum([x[1] for x in paragraph_counts])
+        else: 
+            text = f'Paragraphs: %i\n' % len(self)
         return text
     def get_metadata_statistics(self):
         metadata_keys = self.get_metadatas()[0].keys()
+        print(metadata_keys)
         text = ''
         for key in metadata_keys:
             counts = self.get_metadata_counts(key)
             if isinstance(self.get_metadatas()[0][key], int): # 0 could be replaced wih something else if data is not consistent
                 text += 'The ' + str(key) +' range is ' + str(sorted(counts)[0][0]) + ' - ' + str(sorted(counts)[-1][0]) + '\n'
             else:
-                text += 'The number of ' + str(key) + ' are ' + sum([x[1] for x in counts])
-
+                text += 'Number of ' + str(key) + 's:' + str(sum([x[1] for x in counts])) + '\n'
         return text
     
     def get_basic_statistics(self):
@@ -391,7 +394,7 @@ class corpus(dict):
         text += self.get_entity_statistics()
         text += self.get_noun_chunk_statistics()
         text += self.get_sentiment_statistics()
-       # text += self.get_metadata_statistics()
+        text += self.get_metadata_statistics()
         text += self.get_paragraph_statistics()
         return text
 
