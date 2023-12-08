@@ -362,7 +362,7 @@ class corpus(dict):
         
         :returns: the statistics report
         :rtype: str
-        """
+        """ 
         # NEW FOR PROJECT 4a
         paragraph_counts = self.get_paragraph_counts()
         if sum([x[1] for x in paragraph_counts]) != 0:
