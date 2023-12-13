@@ -69,12 +69,14 @@ Possible extensions (from least points to most points):
 
 ## Project 4b Rubric
 
-- [] File spacy_on_corpus.py is complete and is commented. (6 points)
-- [] Notebook is code-complete. (6 points)
-- [] All requested screenshots are provided in notebook. (6 points)
-- [] All ten questions are answered. (5 points)
-- [] Student made meaningful commit messages. (1 pt)
-- [] Readme has student's name, class year and resources student used. (1 pt)
-- [] Extension (1-2 points for a start; 3-4 points for a complete extension; 5 points for a surprising and creative extension)
+- [6] File spacy_on_corpus.py is complete and is commented. (6 points)
+- [6] Notebook is code-complete. (6 points)
+- [6] All requested screenshots are provided in notebook. (6 points)
+- [5] All ten questions are answered. (5 points)
+- [1] Student made meaningful commit messages. (1 pt)
+- [1] Readme has student's name, class year and resources student used. (1 pt)
+- [4] Extension (1-2 points for a start; 3-4 points for a complete extension; 5 points for a surprising and creative extension)
 
 ### Comments from grader
+
+* Nice job with the extensions!
